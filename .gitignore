@@ -1,0 +1,24 @@
+##############################
+# Files/File-pattern to ignore
+##############################
+
+# Emacs, Vi and other editor temp files
+*~
+.#*
+
+########################################
+# Directory/Directory pattern to ignore
+########################################
+
+# Intellij project settings folder
+.idea/
+
+# Build destination for Intellij and other IDEs
+out/
+
+# Intellij iml files
+*.iml
+
+# Build destination for Maven
+target/
+
