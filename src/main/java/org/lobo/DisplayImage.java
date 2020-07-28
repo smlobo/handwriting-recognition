@@ -14,6 +14,7 @@ import javafx.scene.paint.Color;
 
 public class DisplayImage extends Application {
     private static int label;
+    private static char charLabel;
     private static int[][] digitImage = new int[28][28];
     private static byte[] buffer = new byte[4];
 
@@ -24,24 +25,31 @@ public class DisplayImage extends Application {
         }
 
         // Generate the real filename for the image & label
-        String imageFile = Constants.DATAFILE_PATH + args[0] + Constants.IMAGE_SUFFIX;
-        String labelFile = Constants.DATAFILE_PATH + args[0] + Constants.LABEL_SUFFIX;
+        //String imageFile = Constants.DATAFILE_PATH + args[0] + Constants.IMAGE_SUFFIX;
+        //String labelFile = Constants.DATAFILE_PATH + args[0] + Constants.LABEL_SUFFIX;
+        String imageFile = args[0] + Constants.IMAGE_SUFFIX;
+        String labelFile = args[0] + Constants.LABEL_SUFFIX;
 
         // Get the index into the data
         int index = Integer.parseInt(args[1]);
 
         // Get the label
-        InputStream inputStream = new BufferedInputStream(
-                new FileInputStream(labelFile));
+        InputStream inputStream = new BufferedInputStream(new FileInputStream(labelFile));
         int size = verifyLabelFile(inputStream);
         // Sanity check
         if (size <= index) {
-            System.out.println("Index [" + index + "] is less than the size [" +
-                    size + "]");
+            System.out.println("Index [" + index + "] is less than the size [" + size + "]");
             System.exit(3);
         }
         label = getLabel(inputStream, index);
-        System.out.println("Index [" + index + "] label is: " + label);
+
+        // For the MNIST letter
+        charLabel = (char) (label + (int)'0');
+        if (args[0].contains("letters")) {
+            charLabel = (char) (label - 1 + (int)'A');
+        }
+
+        System.out.println("Index [" + index + "] label is: " + charLabel + " {" + label + "}");
         inputStream.close();
 
         // Get the image
@@ -49,11 +57,10 @@ public class DisplayImage extends Application {
         size = verifyImageFile(inputStream);
         // Sanity check
         if (size <= index) {
-            System.out.println("Index [" + index + "] is less than the size [" +
-                    size + "]");
+            System.out.println("Index [" + index + "] is less than the size [" + size + "]");
             System.exit(3);
         }
-        getImage(inputStream, index);
+        getImage(inputStream, index, args[0].contains("emnist"));
         inputStream.close();
 
         // Draw the image
@@ -68,16 +75,14 @@ public class DisplayImage extends Application {
         return ByteBuffer.wrap(buffer).getInt();
     }
 
-    private static void skipStream(InputStream inputStream, int count) throws
-            Exception {
+    private static void skipStream(InputStream inputStream, int count) throws Exception {
         while (count > 0) {
             count -= inputStream.skip(count);
         }
         assert(count == 0);
     }
 
-    public static int verifyLabelFile(InputStream inputStream) throws
-            Exception {
+    public static int verifyLabelFile(InputStream inputStream) throws Exception {
         // Read the magic number
         int magicNumber = readInteger(inputStream);
         assert(magicNumber == 0x801);
@@ -91,8 +96,7 @@ public class DisplayImage extends Application {
         return size;
     }
 
-    public static int getLabel(InputStream inputStream, int index) throws
-            Exception {
+    public static int getLabel(InputStream inputStream, int index) throws Exception {
 
         // Skip previous indices
         //assert(inputStream.skip(index) == index);
@@ -108,8 +112,7 @@ public class DisplayImage extends Application {
         return byteRead;
     }
 
-    public static int verifyImageFile(InputStream inputStream) throws
-            Exception {
+    public static int verifyImageFile(InputStream inputStream) throws Exception {
 
         // Read the magic number
         int magicNumber = readInteger(inputStream);
@@ -130,8 +133,12 @@ public class DisplayImage extends Application {
         return size;
     }
 
-    public static int[][] getImage(InputStream inputStream, int index) throws
-            Exception {
+    // Temporary until EMNIST is used everywhere - until then assume MNIST
+    public static int[][] getImage(InputStream inputStream, int index) throws Exception {
+        return getImage(inputStream, index, false);
+    }
+
+    public static int[][] getImage(InputStream inputStream, int index, boolean columnWise) throws Exception {
 
         // Skip previous indices
         //assert(inputStream.skip(index*28*28) == index*28*28);
@@ -142,7 +149,10 @@ public class DisplayImage extends Application {
             for (int j = 0; j < 28; j++) {
                 int byteRead = inputStream.read();
                 assert(byteRead >=0 && byteRead <= 255);
-                digitImage[i][j] = byteRead;
+                if (!columnWise)
+                    digitImage[i][j] = byteRead;
+                else
+                    digitImage[j][i] = byteRead;
             }
         }
 
@@ -162,13 +172,12 @@ public class DisplayImage extends Application {
             for (int j = 0; j < 28; j++) {
                 Rectangle sq = new Rectangle(j*10,i*10,10,10);
                 // Input file format 0 == white, 255 == black
-                sq.setFill(Color.rgb(digitImage[i][j], digitImage[i][j],
-                        digitImage[i][j]));
+                sq.setFill(Color.rgb(digitImage[i][j], digitImage[i][j], digitImage[i][j]));
                 root.getChildren().add(sq);
             }
         }
 
-        primaryStage.setTitle("Digit: " + label);
+        primaryStage.setTitle("Digit: " + charLabel + "/" + label);
         primaryStage.setScene(scene);
         primaryStage.show();
     }

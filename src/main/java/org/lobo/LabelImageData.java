@@ -53,7 +53,7 @@ public class LabelImageData {
 
         assert(labelSize == imageSize);
 
-        data = new ArrayList<LabelImagePair>(labelSize);
+        data = new ArrayList<>(labelSize);
 
         // Iterate over all the data
         for (int i = 0; i < labelSize; i++) {
