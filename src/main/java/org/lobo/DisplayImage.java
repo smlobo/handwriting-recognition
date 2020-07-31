@@ -25,10 +25,8 @@ public class DisplayImage extends Application {
         }
 
         // Generate the real filename for the image & label
-        //String imageFile = Constants.DATAFILE_PATH + args[0] + Constants.IMAGE_SUFFIX;
-        //String labelFile = Constants.DATAFILE_PATH + args[0] + Constants.LABEL_SUFFIX;
-        String imageFile = args[0] + Constants.IMAGE_SUFFIX;
-        String labelFile = args[0] + Constants.LABEL_SUFFIX;
+        String imageFile = Constants.DATAFILE_PATH + args[0] + Constants.IMAGE_SUFFIX;
+        String labelFile = Constants.DATAFILE_PATH + args[0] + Constants.LABEL_SUFFIX;
 
         // Get the index into the data
         int index = Integer.parseInt(args[1]);
@@ -43,8 +41,9 @@ public class DisplayImage extends Application {
         }
         label = getLabel(inputStream, index);
 
-        // For the MNIST letter
+        // For the MNIST digits 0 -> 0, 1 -> 1, ...
         charLabel = (char) (label + (int)'0');
+        // For EMNIST letters 1 -> A, 2 -> B, ...
         if (args[0].contains("letters")) {
             charLabel = (char) (label - 1 + (int)'A');
         }

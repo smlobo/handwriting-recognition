@@ -33,38 +33,50 @@ public class NeuralNetwork {
     private static double[] l2Activations = new double[L2SIZE];
 
     // Layer 2 -> 3 weights
-    private static double[][] l23Weights = new double[L2SIZE][10];
+    private static double[][] l23Weights = new double[L2SIZE][];
     // Layer 2 -> 3 nabla weights
-    private static double[][] l23NablaWeights = new double[L2SIZE][10];
+    private static double[][] l23NablaWeights = new double[L2SIZE][];
 
     // Layer 3 biases
-    private static double[] l3Biases = new double[10];
+    private static double[] l3Biases;
     // Layer 3 nabla biases
-    private static double[] l3NablaBiases = new double[10];
+    private static double[] l3NablaBiases;
 
     // Layer 3 z-values
-    private static double[] l3ZValues = new double[10];
+    private static double[] l3ZValues;
 
     // Layer 3 activations
-    private static double[] l3Activations = new double[10];
+    private static double[] l3Activations;
 
     private static Random random = new Random();
 
+    private static DataType dataType;
     private static LabelImageData trainingData;
     private static LabelImageData testData;
 
     public static void main(String[] args) throws Exception {
-        // Initialize the network with random "standard normal" values
-        initialize();
+        // At least 1 arg is expected - the type of data
+        if (args.length < 1) {
+            System.out.println("Usage: java NeuralNetwork <data-type> [<num-of-epochs>]");
+            System.exit(1);
+        }
 
+        // Parse the 1st arg
+        dataType = DataType.getType(args[0]);
+        System.out.println("Using data: " + dataType);
+
+        // Default epochs are 1. Unless specified on the command line.
         int epochs = 1;
-        if (args.length == 1) {
-            epochs = Integer.parseInt(args[0]);
+        if (args.length == 2) {
+            epochs = Integer.parseInt(args[1]);
         }
         System.out.println("Running with " + epochs + " epochs.");
 
-        trainingData = new LabelImageData("train");
-        testData = new LabelImageData("t10k");
+        // Initialize the network with random "standard normal" values
+        initialize();
+
+        trainingData = new LabelImageData(dataType.trainName());
+        testData = new LabelImageData(dataType.testName());
 
         // Iterate over epochs
         for (int i = 0; i < epochs; i++) {
@@ -76,12 +88,11 @@ public class NeuralNetwork {
 
             // Test the network
             //testNetwork();
-            //testNetworkAuto();
-            testNetworkAutoRandom();
+            testNetworkAuto();
         }
 
         // Interactive test
-        testNetwork();
+        //testNetwork();
     }
 
     private static void trainNetwork() throws Exception {
@@ -126,6 +137,9 @@ public class NeuralNetwork {
     }
 
     private static void backPropagate(int[][] image, int answer) {
+        // Update the answer to reflect the offset (numbers 0 -> 0, but letters 1 -> A/a)
+        answer -= dataType.offset();
+
         // Feedforward
         feedForward(image);
         //printBiases(l3Activations);
@@ -221,11 +235,11 @@ public class NeuralNetwork {
         Scanner inputScanner = new Scanner(System.in);
 
         InputStream testLabelStream = new BufferedInputStream(
-                new FileInputStream(Constants.TEST_LABELS));
+                new FileInputStream(Constants.DATAFILE_PATH + dataType.testName() + Constants.LABEL_SUFFIX));
         int testLabelSize = DisplayImage.verifyLabelFile(testLabelStream);
 
         InputStream testImageStream = new BufferedInputStream(
-                new FileInputStream(Constants.TEST_IMAGES));
+                new FileInputStream(Constants.DATAFILE_PATH + dataType.testName() + Constants.IMAGE_SUFFIX));
         int testImageSize = DisplayImage.verifyImageFile(testImageStream);
 
         assert(testLabelSize == testImageSize);
@@ -242,8 +256,13 @@ public class NeuralNetwork {
             int index = Integer.parseInt(input);
             if (index >= testLabelSize)
                 continue;
-            System.out.println("The label for image [" + index + "] is: " +
-                    DisplayImage.getLabel(testLabelStream, index));
+
+            // For MNIST digit 0 -> 0, 1 -> 1, ...
+            // For EMNIST letter 1 -> a, 2 -> b, ...
+            int label = DisplayImage.getLabel(testLabelStream, index) - dataType.offset();
+            char charLabel = (char) (label + (int)dataType.mappingStart());
+
+            System.out.println("The label for image [" + index + "] is: " + charLabel + " (" + label + ")");
 
             showImage(index);
 
@@ -261,46 +280,24 @@ public class NeuralNetwork {
             //System.out.print("l2 activations: ");
             printBiases(l3Activations);
 
-            System.out.println("The network says: " + getNetworkOutput());
+            int answer = getNetworkOutput();
+            char charAnswer = (char) (answer + (int)dataType.mappingStart());
+            System.out.println("The network says: " + charAnswer + " (" + answer + ")");
         }
         testLabelStream.close();
         testImageStream.close();
     }
 
-    private static void testNetworkAuto() throws Exception {
-        // Ask for an input to test ('q' to quit)
-        Scanner inputScanner = new Scanner(System.in);
-
-        InputStream testLabelStream = new BufferedInputStream(
-                new FileInputStream(Constants.TEST_LABELS));
-        int testLabelSize = DisplayImage.verifyLabelFile(testLabelStream);
-
-        InputStream testImageStream = new BufferedInputStream(
-                new FileInputStream(Constants.TEST_IMAGES));
-        int testImageSize = DisplayImage.verifyImageFile(testImageStream);
-
-        assert(testLabelSize == testImageSize);
-
-        int correctCount = 0;
-        for (int i = 0; i < testLabelSize; i++) {
-            // Read the image, returning a 2d array
-            int[][] imageArray = DisplayImage.getImage(testImageStream, i);
-            feedForward(imageArray);
-            if (DisplayImage.getLabel(testLabelStream, i) == getNetworkOutput())
-                correctCount++;
-        }
-        double percentCorrect = ((double) correctCount)/testLabelSize * 100;
-        System.out.println(correctCount + " out of " + testLabelSize +
-                " correct = " + percentCorrect + "%");
-    }
-
-    private static void testNetworkAutoRandom() {
+    private static void testNetworkAuto() {
         ArrayList<LabelImagePair> dataList = testData.data();
-        Collections.shuffle(dataList);
+        //Collections.shuffle(dataList);
         int correctCount = 0;
         for (LabelImagePair pair : dataList) {
             feedForward(pair.image());
-            if (pair.label() == getNetworkOutput())
+
+            // update the label to reflect the mapping offset 0 -> 0, 1 -> A/a
+            int answer = pair.label() - dataType.offset();
+            if (answer == getNetworkOutput())
                 correctCount++;
         }
         double percentCorrect = ((double) correctCount)/dataList.size() * 100;
@@ -368,8 +365,24 @@ public class NeuralNetwork {
         return maxIndex;
     }
     private static void initialize() {
-        System.out.println("Initializing the network : 784, " + L2SIZE +
-                ", 10 ...");
+        System.out.println("Initializing the network : 784, " + L2SIZE + ", " + dataType.outputs() + "...");
+
+        // Layer 2 -> 3 weights
+        for (int i = 0; i < l23Weights.length; i++)
+            l23Weights[i] = new double[dataType.outputs()];
+        // Layer 2 -> 3 nabla weights
+        for (int i = 0; i < l23NablaWeights.length; i++)
+            l23NablaWeights[i] = new double[dataType.outputs()];
+
+        // Layer 3 biases
+        l3Biases = new double[dataType.outputs()];
+        // Layer 3 nabla biases
+        l3NablaBiases = new double[dataType.outputs()];
+        // Layer 3 z-values
+        l3ZValues = new double[dataType.outputs()];
+        // Layer 3 activations
+        l3Activations = new double[dataType.outputs()];
+
         initializeWeights(l12Weights);
         initializeWeights(l23Weights);
         initializeBiases(l2Biases);
@@ -401,7 +414,7 @@ public class NeuralNetwork {
     }
 
     private static void showImage(int index) throws Exception {
-        // Execute "java -cp <this-jar> org.lobo.DisplayImage t10k <index>"
+        // Execute "java -cp <this-jar> org.lobo.DisplayImage <test-file-name> <index>"
         String jarPath = new File(NeuralNetwork.class.getProtectionDomain().getCodeSource().getLocation().toURI()).
                 getPath();
 
@@ -410,9 +423,8 @@ public class NeuralNetwork {
         execArgs.add("-cp");
         execArgs.add(jarPath);
         execArgs.add("org.lobo.DisplayImage");
-        execArgs.add("t10k");
+        execArgs.add(dataType.testName());
         execArgs.add(Integer.toString(index));
-        Process process = Runtime.getRuntime().exec(execArgs.toArray(
-                new String[execArgs.size()]));
+        Process process = Runtime.getRuntime().exec(execArgs.toArray(new String[execArgs.size()]));
     }
 }
