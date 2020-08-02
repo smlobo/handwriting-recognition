@@ -78,6 +78,9 @@ public class NeuralNetwork {
         trainingData = new LabelImageData(dataType.trainName());
         testData = new LabelImageData(dataType.testName());
 
+        System.out.println("Training dataset size: " + trainingData.data().size());
+        System.out.println("Testing dataset size: " + testData.data().size());
+
         // Iterate over epochs
         for (int i = 0; i < epochs; i++) {
             System.out.println("Epoch #" + i);
@@ -92,7 +95,7 @@ public class NeuralNetwork {
         }
 
         // Interactive test
-        //testNetwork();
+        testNetwork();
     }
 
     private static void trainNetwork() throws Exception {
@@ -259,8 +262,8 @@ public class NeuralNetwork {
 
             // For MNIST digit 0 -> 0, 1 -> 1, ...
             // For EMNIST letter 1 -> a, 2 -> b, ...
-            int label = DisplayImage.getLabel(testLabelStream, index) - dataType.offset();
-            char charLabel = (char) (label + (int)dataType.mappingStart());
+            int label = DisplayImage.getLabel(testLabelStream, index);
+            char charLabel = dataType.mapping(label);
 
             System.out.println("The label for image [" + index + "] is: " + charLabel + " (" + label + ")");
 
@@ -280,8 +283,8 @@ public class NeuralNetwork {
             //System.out.print("l2 activations: ");
             printBiases(l3Activations);
 
-            int answer = getNetworkOutput();
-            char charAnswer = (char) (answer + (int)dataType.mappingStart());
+            int answer = getNetworkOutput() + dataType.offset();
+            char charAnswer = dataType.mapping(answer);
             System.out.println("The network says: " + charAnswer + " (" + answer + ")");
         }
         testLabelStream.close();
