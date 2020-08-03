@@ -95,6 +95,7 @@ public class DisplayImage extends Application {
         return size;
     }
 
+    // Random order reading
     public static int getLabel(InputStream inputStream, int index) throws Exception {
 
         // Skip previous indices
@@ -103,11 +104,19 @@ public class DisplayImage extends Application {
 
         // Read the byte
         int byteRead = inputStream.read();
-        assert(byteRead >=0 && byteRead <= 9);
+        assert(byteRead >=0 && byteRead <= 47);
 
         // Reset for the next invocation
         inputStream.reset();
 
+        return byteRead;
+    }
+
+    // Sequential order reading
+    public static int getLabel(InputStream inputStream) throws Exception {
+        // Read the byte
+        int byteRead = inputStream.read();
+        assert(byteRead >=0 && byteRead <= 47);
         return byteRead;
     }
 
@@ -132,7 +141,7 @@ public class DisplayImage extends Application {
         return size;
     }
 
-    // Temporary until EMNIST is used everywhere - until then assume MNIST
+    // Read images in random order. No display, so row/column wise does not matter.
     public static int[][] getImage(InputStream inputStream, int index) throws Exception {
         return getImage(inputStream, index, false);
     }
@@ -157,6 +166,20 @@ public class DisplayImage extends Application {
 
         // Reset for the next invocation
         inputStream.reset();
+
+        return digitImage;
+    }
+
+    // Read images in sequential order. No display, so row/column wise does not matter.
+    public static int[][] getImage(InputStream inputStream) throws Exception {
+        // Read the byte
+        for (int i = 0; i < 28; i++) {
+            for (int j = 0; j < 28; j++) {
+                int byteRead = inputStream.read();
+                assert(byteRead >=0 && byteRead <= 255);
+                digitImage[i][j] = byteRead;
+            }
+        }
 
         return digitImage;
     }

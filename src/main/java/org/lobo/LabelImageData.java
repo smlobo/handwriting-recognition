@@ -28,10 +28,14 @@ public class LabelImageData {
         // Iterate over all the data
         for (int i = 0; i < labelSize; i++) {
             LabelImagePair entry = new LabelImagePair(i,
-                    DisplayImage.getLabel(labelStream, i),
-                    DisplayImage.getImage(imageStream, i));
+                    DisplayImage.getLabel(labelStream),
+                    DisplayImage.getImage(imageStream));
             data.add(entry);
         }
+
+        // Assert EOF
+        assert(labelStream.read() == -1);
+        assert(imageStream.read() == -1);
 
         labelStream.close();
         imageStream.close();

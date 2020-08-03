@@ -90,7 +90,6 @@ public class NeuralNetwork {
             trainNetworkRandom();
 
             // Test the network
-            //testNetwork();
             testNetworkAuto();
         }
 
