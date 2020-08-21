@@ -10,8 +10,7 @@ import java.util.Random;
 import java.util.Scanner;
 
 public class NeuralNetwork {
-    private static final double ETA = 3.0;
-    private static final int L2SIZE = 15;
+    private static final int L2SIZE = 50;
 
     // Layer 1 node activations (the input image)
     private static double[] l1Activations = new double[784];
@@ -53,24 +52,12 @@ public class NeuralNetwork {
     private static DataType dataType;
     private static LabelImageData trainingData;
     private static LabelImageData testData;
+    private static Cost cost;                       // QuadraticCost default
+    private static int epochs = 5;
+    private static double eta = 0.5;
 
     public static void main(String[] args) throws Exception {
-        // At least 1 arg is expected - the type of data
-        if (args.length < 1) {
-            System.out.println("Usage: java NeuralNetwork <data-type> [<num-of-epochs>]");
-            System.exit(1);
-        }
-
-        // Parse the 1st arg
-        dataType = DataType.getType(args[0]);
-        System.out.println("Using data: " + dataType);
-
-        // Default epochs are 1. Unless specified on the command line.
-        int epochs = 1;
-        if (args.length == 2) {
-            epochs = Integer.parseInt(args[1]);
-        }
-        System.out.println("Running with " + epochs + " epochs.");
+        parseArguments(args);
 
         // Initialize the network with random "standard normal" values
         initialize();
@@ -170,14 +157,14 @@ public class NeuralNetwork {
                                       double[][] nablaWeights) {
         for (int i = 0; i < weights.length; i++) {
             for (int j = 0; j < weights[0].length; j++) {
-                weights[i][j] -= (ETA * nablaWeights[i][j]);
+                weights[i][j] -= (eta * nablaWeights[i][j]);
             }
         }
     }
 
     private static void updateBiases(double[] biases, double[] nablaBiases) {
         for (int i = 0; i < biases.length; i++) {
-            biases[i] -= (ETA * nablaBiases[i]);
+            biases[i] -= (eta * nablaBiases[i]);
         }
     }
 
@@ -189,13 +176,14 @@ public class NeuralNetwork {
         assert(activations.length == zValues.length);
         assert(zValues.length == answers.length);
 
-        for (int i = 0; i < activations.length; i++) {
+        /*for (int i = 0; i < activations.length; i++) {
             if (x == i)
                 answers[i] = activations[i] - 1.0;
             else
                 answers[i] = activations[i] - 0.0;
             answers[i] *= sigmoidPrime(zValues[i]);
-        }
+        }*/
+        cost.delta(activations, x, zValues, answers);
     }
 
     private static void calculateNablaBiases(double[][] weights, double[] delta,
@@ -347,7 +335,7 @@ public class NeuralNetwork {
         return xx;
     }
 
-    private static double sigmoidPrime(double z) {
+    protected static double sigmoidPrime(double z) {
         //double eExpMinusZ = Math.exp(-z);
         //return eExpMinusZ/Math.pow(1.0+eExpMinusZ, 2.0);
         return sigmoid(z) * (1-sigmoid(z));
@@ -428,5 +416,63 @@ public class NeuralNetwork {
         execArgs.add(dataType.testName());
         execArgs.add(Integer.toString(index));
         Process process = Runtime.getRuntime().exec(execArgs.toArray(new String[execArgs.size()]));
+    }
+
+    private static void parseArguments(String[] args) {
+        // At least 1 arg is expected - the type of data
+        if (args.length < 1) {
+            System.out.println("Usage: java NeuralNetwork <data-type> [-epochs=<num-of-epochs>] [-cost=<q|ce>] " +
+                    "[-eta=<learning-rate>] [-hidden=<num-of-neurons>]");
+            System.exit(1);
+        }
+
+        // Parse the 1st arg
+        dataType = DataType.getType(args[0]);
+        System.out.println("Using data: " + dataType);
+
+        // Iterate over options
+        for (int i = 1; i < args.length; i++) {
+
+            String[] option = args[i].split("=");
+            assert(option.length == 2);
+
+            // Epochs
+            if ("-epochs".equals(option[0])) {
+                epochs = Integer.parseInt(option[1]);
+            }
+
+            // Cost Function
+            if ("-cost".equals(option[0])) {
+                if ("q".equals(option[1])) {
+                    cost = new QuadraticCost();
+                }
+                else if ("ce".equals(option[1])) {
+                    cost = new CrossEntropy();
+                }
+                else {
+                    System.out.println("The -cost argument must be [q|ce]");
+                    System.exit(1);
+                }
+            }
+
+            // Learning rate
+            if ("-eta".equals(option[0])) {
+                eta = Double.parseDouble(option[1]);
+            }
+        }
+
+        // Summary
+        System.out.println("Running with " + epochs + " epochs.");
+        System.out.println("Learning rate: " + eta);
+
+        if (cost == null)
+            cost = new QuadraticCost();
+
+        if (cost instanceof QuadraticCost) {
+            System.out.println("Using the Quadratic cost function.");
+        }
+        else {
+            System.out.println("Using the Cross-Entropy cost function.");
+        }
     }
 }
