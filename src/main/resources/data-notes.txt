@@ -1,0 +1,17 @@
+
+Incorrect data
+==============
+
+Data set	Index	Incorrect	Correct
+			Char	Offset	Char	Offset
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+MNIST (train/t10k):
+
+-----------------------------------------------------------
+EMNIST Letters (emnist-letters):
+
+-----------------------------------------------------------
+EMNIST Balanced Numbers, Upper case & Lower case (emnist-balanced):
+		283	F	15	f	40
+		823	J	19	j	--
+-----------------------------------------------------------
