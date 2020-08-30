@@ -10,31 +10,31 @@ import java.util.Random;
 import java.util.Scanner;
 
 public class NeuralNetwork {
-    private static final int L2SIZE = 50;
+    private static final int INPUT_LAYER_SIZE = 28*28;
 
     // Layer 1 node activations (the input image)
-    private static double[] l1Activations = new double[784];
+    private static double[] l1Activations = new double[INPUT_LAYER_SIZE];
 
     // Layer 1 -> 2 weights
-    private static double[][] l12Weights = new double[784][L2SIZE];
+    private static double[][] l12Weights = new double[INPUT_LAYER_SIZE][];
     // Layer 1 -> 2 nabla weights
-    private static double[][] l12NablaWeights = new double[784][L2SIZE];
+    private static double[][] l12NablaWeights = new double[INPUT_LAYER_SIZE][];
 
     // Layer 2 biases
-    private static double[] l2Biases = new double[L2SIZE];
+    private static double[] l2Biases;
     // Layer 2 nabla biases
-    private static double[] l2NablaBiases = new double[L2SIZE];
+    private static double[] l2NablaBiases;
 
     // Layer 2 z-values
-    private static double[] l2ZValues = new double[L2SIZE];
+    private static double[] l2ZValues;
 
     // Layer 2 activations
-    private static double[] l2Activations = new double[L2SIZE];
+    private static double[] l2Activations;
 
     // Layer 2 -> 3 weights
-    private static double[][] l23Weights = new double[L2SIZE][];
+    private static double[][] l23Weights;
     // Layer 2 -> 3 nabla weights
-    private static double[][] l23NablaWeights = new double[L2SIZE][];
+    private static double[][] l23NablaWeights;
 
     // Layer 3 biases
     private static double[] l3Biases;
@@ -55,6 +55,7 @@ public class NeuralNetwork {
     private static Cost cost;                       // QuadraticCost default
     private static int epochs = 5;
     private static double eta = 0.5;
+    private static int l2Size = 50;
 
     public static void main(String[] args) throws Exception {
         parseArguments(args);
@@ -355,12 +356,31 @@ public class NeuralNetwork {
         return maxIndex;
     }
     private static void initialize() {
-        System.out.println("Initializing the network : 784, " + L2SIZE + ", " + dataType.outputs() + "...");
+        System.out.println("Initializing the network : " + INPUT_LAYER_SIZE + ", " + l2Size + ", " + dataType.outputs() +
+                "...");
+
+        // Layer 1 -> 2 weights
+        for (int i = 0; i < l12Weights.length; i++)
+            l12Weights[i] = new double[l2Size];
+        // Layer 1 -> 2 nabla weights
+        for (int i = 0; i < l12NablaWeights.length; i++)
+            l12NablaWeights[i] = new double[l2Size];
+
+        // Layer 2 biases
+        l2Biases = new double[l2Size];
+        // Layer 2 nabla biases
+        l2NablaBiases = new double[l2Size];
+        // Layer 2 z-values
+        l2ZValues = new double[l2Size];
+        // Layer 2 activations
+        l2Activations = new double[l2Size];
 
         // Layer 2 -> 3 weights
+        l23Weights = new double[l2Size][];
         for (int i = 0; i < l23Weights.length; i++)
             l23Weights[i] = new double[dataType.outputs()];
         // Layer 2 -> 3 nabla weights
+        l23NablaWeights = new double[l2Size][];
         for (int i = 0; i < l23NablaWeights.length; i++)
             l23NablaWeights[i] = new double[dataType.outputs()];
 
@@ -442,7 +462,7 @@ public class NeuralNetwork {
             }
 
             // Cost Function
-            if ("-cost".equals(option[0])) {
+            else if ("-cost".equals(option[0])) {
                 if ("q".equals(option[1])) {
                     cost = new QuadraticCost();
                 }
@@ -456,14 +476,20 @@ public class NeuralNetwork {
             }
 
             // Learning rate
-            if ("-eta".equals(option[0])) {
+            else if ("-eta".equals(option[0])) {
                 eta = Double.parseDouble(option[1]);
+            }
+
+            // Hidden (L2) layer
+            else if ("-hidden".equals(option[0])) {
+                l2Size = Integer.parseInt(option[1]);
             }
         }
 
         // Summary
         System.out.println("Running with " + epochs + " epochs.");
         System.out.println("Learning rate: " + eta);
+        System.out.println("Hidden (l2) size: " + l2Size);
 
         if (cost == null)
             cost = new QuadraticCost();
