@@ -4,52 +4,91 @@ public enum DataType {
 
     MNIST_DIGITS("train", "t10k", 10, 0) {
         @Override
-        public char mapping(int i) {
-            return (char) (i - offset() + (int) '0');
+        public String mapping(int i) {
+            return Character.toString((char) (i - offset() + (int) '0'));
         }
     },
     EMNIST_LETTERS("emnist-letters-train", "emnist-letters-test", 26, 1) {
         @Override
-        public char mapping(int i) {
-            return (char) (i - offset() + (int) 'A');
+        public String mapping(int i) {
+            return Character.toString((char) (i - offset() + (int) 'A'));
         }
     },
     EMNIST_CHARS("emnist-balanced-train", "emnist-balanced-test", 47, 0) {
         @Override
-        public char mapping(int i) {
+        public String mapping(int i) {
             // 0-9 -> 0-9
             if (i <= 9)
-                return (char) (i + (int) '0');
+                return Character.toString((char) (i + (int) '0'));
             // 10-35 => A-Z
             else if (i <= 35)
-                return (char) (i - 10 + (int) 'A');
+                return Character.toString((char) (i - 10 + (int) 'A'));
 
             // 36-46 are somewhat random
             switch (i) {
                 case 36:
-                    return 'a';
+                    return "a";
                 case 37:
-                    return 'b';
+                    return "b";
                 case 38:
-                    return 'd';
+                    return "d";
                 case 39:
-                    return 'e';
+                    return "e";
                 case 40:
-                    return 'f';
+                    return "f";
                 case 41:
-                    return 'g';
+                    return "g";
                 case 42:
-                    return 'h';
+                    return "h";
                 case 43:
-                    return 'n';
+                    return "n";
                 case 44:
-                    return 'q';
+                    return "q";
                 case 45:
-                    return 'r';
+                    return "r";
                 case 46:
-                    return 't';
+                    return "t";
             }
-            return '-';
+            return "-";
+        }
+    },
+    FASHION("fashion-train", "fashion-t10k", 10, 0) {
+        @Override
+        public String mapping(int i) {
+            String retString = "";
+            switch (i) {
+                case 0:
+                    retString = "t-shirt";
+                    break;
+                case 1:
+                    retString = "trowser";
+                    break;
+                case 2:
+                    retString = "pullover";
+                    break;
+                case 3:
+                    retString = "dress";
+                    break;
+                case 4:
+                    retString = "coat";
+                    break;
+                case 5:
+                    retString = "sandal";
+                    break;
+                case 6:
+                    retString = "shirt";
+                    break;
+                case 7:
+                    retString = "sneaker";
+                    break;
+                case 8:
+                    retString = "bag";
+                    break;
+                case 9:
+                    retString = "ankle boot";
+                    break;
+            }
+            return retString + "{" + i + "}";
         }
     };
 
@@ -58,7 +97,7 @@ public enum DataType {
     private final int outputs;
     private final int offset;           // Digit labels are 0-9; Letter labels are 1-26
 
-    public abstract char mapping(int i);
+    public abstract String mapping(int i);
 
     DataType(String trainName, String testName, int outputs, int offset) {
         this.trainName = trainName;
@@ -75,6 +114,8 @@ public enum DataType {
                 return EMNIST_LETTERS;
             case "3":
                 return EMNIST_CHARS;
+            case "4":
+                return FASHION;
             default:
                 System.out.println("Bad data type -> " + arg);
                 System.exit(1);

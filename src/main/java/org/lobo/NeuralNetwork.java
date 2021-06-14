@@ -251,9 +251,9 @@ public class NeuralNetwork {
             // For MNIST digit 0 -> 0, 1 -> 1, ...
             // For EMNIST letter 1 -> a, 2 -> b, ...
             int label = DisplayImage.getLabel(testLabelStream, index);
-            char charLabel = dataType.mapping(label);
+            String strLabel = dataType.mapping(label);
 
-            System.out.println("The label for image [" + index + "] is: " + charLabel + " (" + label + ")");
+            System.out.println("The label for image [" + index + "] is: " + strLabel + " (" + label + ")");
 
             showImage(index);
 
@@ -272,8 +272,8 @@ public class NeuralNetwork {
             printBiases(l3Activations);
 
             int answer = getNetworkOutput() + dataType.offset();
-            char charAnswer = dataType.mapping(answer);
-            System.out.println("The network says: " + charAnswer + " (" + answer + ")");
+            String strAnswer = dataType.mapping(answer);
+            System.out.println("The network says: " + strAnswer + " (" + answer + ")");
         }
         testLabelStream.close();
         testImageStream.close();
