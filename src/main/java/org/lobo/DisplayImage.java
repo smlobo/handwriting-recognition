@@ -56,7 +56,7 @@ public class DisplayImage extends Application {
         size = verifyImageFile(inputStream);
         // Sanity check
         if (size <= index) {
-            System.out.println("Index [" + index + "] is less than the size [" + size + "]");
+            System.out.println("Index [" + index + "] is greater than the size [" + size + "]");
             System.exit(3);
         }
         getImage(inputStream, index, args[0].contains("emnist"));

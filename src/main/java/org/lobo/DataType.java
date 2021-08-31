@@ -90,6 +90,30 @@ public enum DataType {
             }
             return retString + "{" + i + "}";
         }
+    },
+    MUSIC("notes", "notes", 5, 0) {
+        @Override
+        public String mapping(int i) {
+            String retString = "";
+            switch (i) {
+                case 0:
+                    retString = "whole";
+                    break;
+                case 1:
+                    retString = "half";
+                    break;
+                case 2:
+                    retString = "quarter";
+                    break;
+                case 3:
+                    retString = "eighth";
+                    break;
+                case 4:
+                    retString = "sixteenth";
+                    break;
+            }
+            return retString + "{" + i + "}";
+        }
     };
 
     private final String trainName;
@@ -116,6 +140,8 @@ public enum DataType {
                 return EMNIST_CHARS;
             case "4":
                 return FASHION;
+            case "5":
+                return MUSIC;
             default:
                 System.out.println("Bad data type -> " + arg);
                 System.exit(1);
